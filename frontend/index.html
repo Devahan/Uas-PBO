@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIPONSIKA - Manajemen Darurat</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind Config for Custom Colors -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            800: '#1e3a5f',
+                            900: '#112240',
+                        },
+                        brand: {
+                            orange: '#ff6b35',
+                            blue: '#0a2540',
+                            light: '#f4f7f6',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar-item.active {
+            background-color: #ff6b35;
+            color: white;
+            border-radius: 0.5rem;
+        }
+        .sidebar-item {
+            color: #4a5568;
+            transition: all 0.3s ease;
+        }
+        .sidebar-item:hover:not(.active) {
+            background-color: #e2e8f0;
+            border-radius: 0.5rem;
+        }
+        /* Custom scrollbar for chat */
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-container::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 4px;
+        }
+        /* Typing indicator */
+        .typing-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #0a2540;
+            animation: typing 1.4s infinite both;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1); }
+        }
+        /* Smooth message transition */
+        .msg-bot, .msg-user {
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans antialiased text-slate-800">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex shrink-0">
+            <div class="h-16 flex items-center px-6 border-b border-slate-200">
+                <h1 class="text-2xl font-bold text-brand-blue tracking-tight">Si<span class="text-brand-orange">PONSIKA</span></h1>
+            </div>
+            <div class="px-6 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Manajemen Darurat</div>
+            
+            <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+                <a href="#" class="sidebar-item active flex items-center px-4 py-3 text-sm font-medium" data-target="dashboard">
+                    <i class="fas fa-th-large w-6"></i> Dasbor
+                </a>
+                <a href="#" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium" data-target="posko">
+                    <i class="fas fa-hospital w-6"></i> Manajemen Posko
+                </a>
+                <a href="#" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium" data-target="pengungsi">
+                    <i class="fas fa-users w-6"></i> Manajemen Pengungsi
+                </a>
+                <a href="#" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium" data-target="kamar">
+                    <i class="fas fa-bed w-6"></i> Distribusi Kamar
+                </a>
+                <a href="#" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium" data-target="ai">
+                    <i class="fas fa-robot w-6"></i> Asisten AI
+                </a>
+            </nav>
+            <div class="p-4 border-t border-slate-200">
+                <a href="#" class="flex items-center text-sm font-medium text-slate-500 hover:text-slate-800">
+                    <i class="fas fa-question-circle w-6"></i> Bantuan
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-50">
+            
+            <!-- Header -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
+                <div class="flex-1 max-w-xl">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="w-full pl-10 pr-4 py-2 bg-slate-100 border-transparent rounded-lg text-sm focus:bg-white focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none transition-all" placeholder="Cari posko, pengungsi, atau kamar...">
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-slate-400 hover:text-slate-600 relative">
+                        <i class="far fa-bell text-lg"></i>
+                        <span class="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <div class="h-8 w-px bg-slate-200"></div>
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-sm font-bold text-slate-800">A. Wijaya</div>
+                            <div class="text-xs text-slate-500">Koordinator Lapangan</div>
+                        </div>
+                        <img src="https://ui-avatars.com/api/?name=A+Wijaya&background=0D8ABC&color=fff" alt="User" class="h-9 w-9 rounded-full object-cover border border-slate-200">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area (Dynamic Sections) -->
+            <div class="flex-1 overflow-y-auto p-6" id="main-content">
+                
+                <!-- SECTION: DASHBOARD -->
+                <section id="section-dashboard" class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Ikhtisar Operasi</h2>
+                            <p class="text-sm text-slate-500">Pemantauan logistik darurat dan tempat penampungan secara real-time.</p>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Ekspor Laporan</button>
+                            <button id="btn-add-pengungsi-dashboard" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-medium hover:bg-navy-900 transition-colors">+ Registrasi Baru</button>
+                        </div>
+                    </div>
+
+                    <!-- KPI Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="bg-blue-50 text-brand-blue p-2 rounded-lg"><i class="fas fa-users"></i></div>
+                            </div>
+                            <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Pengungsi</div>
+                            <div id="kpi-total-pengungsi" class="text-3xl font-bold text-slate-800 mb-2">-</div>
+                            <div class="text-xs text-slate-500">Registrasi terverifikasi di seluruh posko</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="bg-blue-50 text-brand-blue p-2 rounded-lg"><i class="fas fa-hospital-alt"></i></div>
+                            </div>
+                            <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Posko Aktif</div>
+                            <div id="kpi-total-posko" class="text-3xl font-bold text-slate-800 mb-2">-</div>
+                            <div class="text-xs text-slate-500">Posko yang beroperasi aktif</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="bg-blue-50 text-brand-blue p-2 rounded-lg"><i class="fas fa-bed"></i></div>
+                            </div>
+                            <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Kapasitas Tersisa</div>
+                            <div id="kpi-sisa-kapasitas" class="text-3xl font-bold text-slate-800 mb-2">-</div>
+                            <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+                                <div id="kpi-bar-kapasitas" class="bg-brand-blue h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="bg-red-50 p-5 rounded-xl border border-red-200 shadow-sm">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="bg-red-100 text-red-600 p-2 rounded-lg"><i class="fas fa-exclamation-circle"></i></div>
+                            </div>
+                            <div class="text-sm font-semibold text-red-700 uppercase tracking-wider mb-1">Kamar Penuh</div>
+                            <div id="kpi-kamar-penuh" class="text-3xl font-bold text-red-700 mb-2">-</div>
+                            <div class="text-xs text-red-600 font-medium">Perlu realokasi segera</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Left Col -->
+                        <div class="lg:col-span-2 space-y-6">
+                            <!-- Table -->
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                                    <h3 class="text-lg font-bold text-slate-800">Registrasi Pengungsi Terbaru</h3>
+                                    <a href="#" class="text-sm font-medium text-brand-blue hover:text-navy-900">Lihat Semua &rarr;</a>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-sm">
+                                        <thead class="bg-slate-50 text-slate-500 font-semibold uppercase text-xs">
+                                            <tr>
+                                                <th class="px-6 py-3">Nama Pengungsi</th>
+                                                <th class="px-6 py-3">Posko Dituju</th>
+                                                <th class="px-6 py-3">Status</th>
+                                                <th class="px-6 py-3">Terdaftar</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-200">
+                                            <tr>
+                                                <td class="px-6 py-4 flex items-center">
+                                                    <div class="h-8 w-8 rounded-full bg-blue-100 text-brand-blue flex items-center justify-center font-bold text-xs mr-3">BP</div>
+                                                    <div>
+                                                        <div class="font-bold text-slate-800">Budi Pratama</div>
+                                                        <div class="text-xs text-slate-500">ID: #RE-9021</div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-slate-600">Posko Merapi 01</td>
+                                                <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Terverifikasi</span></td>
+                                                <td class="px-6 py-4 text-slate-500 text-xs">2 menit lalu</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 flex items-center">
+                                                    <div class="h-8 w-8 rounded-full bg-orange-100 text-brand-orange flex items-center justify-center font-bold text-xs mr-3">LS</div>
+                                                    <div>
+                                                        <div class="font-bold text-slate-800">Laras Santoso</div>
+                                                        <div class="text-xs text-slate-500">ID: #RE-9022</div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-slate-600">Posko Merapi 04</td>
+                                                <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Menunggu</span></td>
+                                                <td class="px-6 py-4 text-slate-500 text-xs">15 menit lalu</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 flex items-center">
+                                                    <div class="h-8 w-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs mr-3">SY</div>
+                                                    <div>
+                                                        <div class="font-bold text-slate-800">Siti Yuliani</div>
+                                                        <div class="text-xs text-slate-500">ID: #RE-9024</div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-slate-600">Posko Merapi 01</td>
+                                                <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Darurat</span></td>
+                                                <td class="px-6 py-4 text-slate-500 text-xs">1 jam lalu</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Col -->
+                        <div class="space-y-6">
+                            <!-- Warning Banner -->
+                            <div class="bg-brand-blue rounded-xl p-5 text-white relative overflow-hidden shadow-md">
+                                <i class="fas fa-truck absolute right-[-20px] bottom-[-20px] text-7xl text-white opacity-10"></i>
+                                <h3 class="text-lg font-bold mb-2 flex items-center"><i class="fas fa-exclamation-triangle text-amber-400 mr-2"></i> Peringatan Logistik</h3>
+                                <p class="text-sm text-blue-100 mb-4 leading-relaxed">Pasokan air di Zona B (Merapi 01) di bawah 20%. Pengiriman telah diminta.</p>
+                                <button class="bg-white text-brand-blue text-sm font-bold py-2 px-4 rounded-lg w-full hover:bg-slate-100 transition-colors">Setujui Permintaan</button>
+                            </div>
+
+                            <!-- Occupancy Trend -->
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b pb-3">Tren Okupansi Posko</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex justify-between text-xs font-semibold mb-1">
+                                            <span class="text-slate-700">Posko Merapi 01</span>
+                                            <span class="text-red-600">92%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                            <div class="bg-red-500 h-1.5 rounded-full" style="width: 92%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-xs font-semibold mb-1">
+                                            <span class="text-slate-700">Posko Merapi 02</span>
+                                            <span class="text-brand-blue">45%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                            <div class="bg-brand-blue h-1.5 rounded-full" style="width: 45%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-xs font-semibold mb-1">
+                                            <span class="text-slate-700">Posko Merapi 03</span>
+                                            <span class="text-brand-orange">68%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                            <div class="bg-brand-orange h-1.5 rounded-full" style="width: 68%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION: MANAJEMEN POSKO -->
+                <section id="section-posko" class="hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Manajemen Posko</h2>
+                            <p class="text-sm text-slate-500">Pantau dan kelola distribusi shelter darurat di seluruh wilayah.</p>
+                        </div>
+                        <button id="btn-add-posko" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-medium hover:bg-navy-900 transition-colors">+ Tambah Posko</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-center">
+                            <div class="text-xs font-semibold text-slate-500 mb-1">Total Pusat Posko</div>
+                            <div class="text-3xl font-bold text-brand-blue">24 <span class="text-xs text-slate-400 font-normal">+2 aktif hari ini</span></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-center">
+                            <div class="text-xs font-semibold text-slate-500 mb-1">Total Kapasitas</div>
+                            <div class="text-3xl font-bold text-slate-800">12,500 <span class="text-xs text-slate-400 font-normal">Orang</span></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-center">
+                            <div class="text-xs font-semibold text-slate-500 mb-1">Okupansi Saat Ini</div>
+                            <div class="text-3xl font-bold text-brand-orange">8,942 <span class="text-xs text-slate-400 font-normal">72% Terisi</span></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-center">
+                            <div class="text-xs font-semibold text-slate-500 mb-1">Sumber Daya Tersedia</div>
+                            <div class="text-3xl font-bold text-slate-800">158 <span class="text-xs text-slate-400 font-normal">Tim sumber daya</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                            <h3 class="text-lg font-bold text-slate-800">Daftar Distribusi Shelter</h3>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1.5 border border-slate-300 rounded text-sm text-slate-600"><i class="fas fa-filter mr-1"></i> Filter</button>
+                                <button class="px-3 py-1.5 border border-slate-300 rounded text-sm text-slate-600"><i class="fas fa-download mr-1"></i> Ekspor</button>
+                            </div>
+                        </div>
+                        <table class="w-full text-left text-sm" id="posko-table">
+                            <thead class="bg-slate-50 text-slate-500 font-semibold uppercase text-xs border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4">ID Posko</th>
+                                    <th class="px-6 py-4">Nama Posko</th>
+                                    <th class="px-6 py-4">Alamat</th>
+                                    <th class="px-6 py-4">Kapasitas</th>
+                                    <th class="px-6 py-4">Fasilitas</th>
+                                    <th class="px-6 py-4">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200" id="posko-table-body">
+                                <!-- Data Posko Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- SECTION: MANAJEMEN PENGUNGSI -->
+                <section id="section-pengungsi" class="hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Manajemen Pengungsi</h2>
+                            <p class="text-sm text-slate-500">Database terpusat untuk pendataan korban dan pelacakan logistik.</p>
+                        </div>
+                        <button id="btn-add-pengungsi" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-medium hover:bg-navy-900 transition-colors">+ Tambah Pengungsi</button>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex space-x-4 items-center text-sm">
+                        <span class="font-bold text-slate-500"><i class="fas fa-search mr-2"></i>Cari:</span>
+                        <input id="search-pengungsi" type="text" class="flex-1 border border-slate-300 rounded px-3 py-1.5 text-slate-600 focus:outline-none focus:border-brand-blue" placeholder="Ketik nama pengungsi..." oninput="searchPengungsi(this.value)">
+                        <div class="text-right">
+                            <span id="total-pengungsi-count" class="font-bold text-brand-blue">0</span> <span class="text-slate-500">Total Terdata</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <table class="w-full text-left text-sm" id="pengungsi-table">
+                            <thead class="bg-slate-50 text-slate-500 font-semibold uppercase text-xs border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4">ID</th>
+                                    <th class="px-6 py-4">Nama</th>
+                                    <th class="px-6 py-4">Umur</th>
+                                    <th class="px-6 py-4">J.Kelamin</th>
+                                    <th class="px-6 py-4">Keluarga</th>
+                                    <th class="px-6 py-4">Kondisi Kesehatan</th>
+                                    <th class="px-6 py-4">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200" id="pengungsi-table-body">
+                                <!-- Data Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                        <div class="bg-red-50 p-5 rounded-xl border border-red-100">
+                            <div class="text-xs font-bold text-red-600 uppercase mb-2">Perawatan Kritis</div>
+                            <div class="text-3xl font-bold text-red-700">12 <span class="text-xs font-normal">+2 hari ini</span></div>
+                        </div>
+                        <div class="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                            <div class="text-xs font-bold text-brand-blue uppercase mb-2">Rata-rata Keluarga</div>
+                            <div class="text-3xl font-bold text-brand-blue">3.2 <span class="text-xs font-normal">Stabil</span></div>
+                        </div>
+                        <div class="bg-amber-50 p-5 rounded-xl border border-amber-100">
+                            <div class="text-xs font-bold text-amber-700 uppercase mb-2">Anak & Lansia</div>
+                            <div class="text-3xl font-bold text-amber-700">412 <span class="text-xs font-normal">Prioritas</span></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-slate-200">
+                            <div class="text-xs font-bold text-slate-500 uppercase mb-2">Kapasitas Harian</div>
+                            <div class="text-3xl font-bold text-slate-800">84%</div>
+                            <div class="w-full bg-slate-100 rounded-full h-1 mt-2">
+                                <div class="bg-brand-orange h-1 rounded-full" style="width: 84%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION: DISTRIBUSI KAMAR -->
+                <section id="section-kamar" class="hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Distribusi Kamar</h2>
+                            <p class="text-sm text-slate-500">Kelola kamar, kapasitas, dan penghuni di setiap posko.</p>
+                        </div>
+                        <button id="btn-add-kamar" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-medium hover:bg-navy-900 transition-colors">+ Tambah Kamar</button>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                            <h3 class="text-lg font-bold text-slate-800">Daftar Kamar</h3>
+                            <div class="flex space-x-2">
+                                <select id="filter-kamar-posko" class="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-600 focus:outline-none focus:border-brand-blue" onchange="loadKamarData()">
+                                    <option value="">Semua Posko</option>
+                                </select>
+                            </div>
+                        </div>
+                        <table class="w-full text-left text-sm" id="kamar-table">
+                            <thead class="bg-slate-50 text-slate-500 font-semibold uppercase text-xs border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4">ID Kamar</th>
+                                    <th class="px-6 py-4">Nama Kamar</th>
+                                    <th class="px-6 py-4">Posko</th>
+                                    <th class="px-6 py-4">Kapasitas</th>
+                                    <th class="px-6 py-4">Penghuni</th>
+                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200" id="kamar-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- SECTION: ASISTEN AI -->
+                <section id="section-ai" class="hidden h-full flex flex-col">
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex-1 flex flex-col overflow-hidden">
+                        
+                        <!-- Chat Header -->
+                        <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center space-x-3 shrink-0">
+                            <div class="h-10 w-10 bg-brand-blue rounded-xl flex items-center justify-center text-white text-xl shadow-sm">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800">SIPONSIKA AI</h3>
+                                <p class="text-xs text-emerald-600 font-medium"><i class="fas fa-circle text-[8px] mr-1"></i>Online</p>
+                            </div>
+                        </div>
+
+                        <!-- Chat Messages -->
+                        <div class="flex-1 p-6 overflow-y-auto space-y-6 bg-slate-50/50 chat-container" id="chat-messages">
+                            <!-- Bot Welcome Message -->
+                            <div class="flex items-start max-w-3xl">
+                                <div class="h-8 w-8 bg-brand-blue rounded flex items-center justify-center text-white text-xs shrink-0 mt-1">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="ml-4 bg-blue-50/80 border border-blue-100 p-4 rounded-2xl rounded-tl-none text-slate-700 text-sm leading-relaxed shadow-sm">
+                                    Halo! Saya <strong>SIPONSIKA AI</strong>. Saya siap membantu Anda menganalisis data logistik, memantau pergerakan pengungsi, dan memprediksi kebutuhan darurat di lapangan. Ada yang bisa saya bantu hari ini?
+                                    <div class="text-[10px] text-slate-400 mt-2">09:00 AM</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Input -->
+                        <div class="p-4 bg-white border-t border-slate-200 shrink-0">
+                            <!-- Quick Chips -->
+                            <div class="flex space-x-2 mb-3 overflow-x-auto pb-1">
+                                <button class="chip-btn px-3 py-1.5 bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-brand-blue text-xs rounded-full border border-slate-200 whitespace-nowrap transition-colors"><i class="fas fa-users mr-1"></i> Status pengungsi terkini</button>
+                                <button class="chip-btn px-3 py-1.5 bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-brand-blue text-xs rounded-full border border-slate-200 whitespace-nowrap transition-colors"><i class="fas fa-bed mr-1"></i> Kapasitas posko</button>
+                                <button class="chip-btn px-3 py-1.5 bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-brand-blue text-xs rounded-full border border-slate-200 whitespace-nowrap transition-colors"><i class="fas fa-clipboard-list mr-1"></i> Laporan logistik hari ini</button>
+                            </div>
+                            <div class="relative flex items-center">
+                                <button class="absolute left-3 text-slate-400 hover:text-slate-600"><i class="fas fa-paperclip"></i></button>
+                                <input type="text" id="chat-input" class="w-full pl-10 pr-24 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:bg-white focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none transition-all shadow-inner" placeholder="Tanya asisten AI tentang data krisis..." onkeypress="handleChatEnter(event)">
+                                <div class="absolute right-2 flex items-center space-x-1">
+                                    <button class="text-slate-400 hover:text-slate-600 p-2"><i class="fas fa-microphone"></i></button>
+                                    <button id="send-btn" class="bg-brand-blue hover:bg-navy-900 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center" onclick="sendMessage()">
+                                        Kirim <i class="fas fa-paper-plane ml-2 text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="text-center mt-2 text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                                SIPONSIKA AI DAPAT MELAKUKAN KESALAHAN. HARAP VERIFIKASI DATA PENTING SECARA MANUAL.
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Overlay for CRUD -->
+    <div id="crud-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                <h3 id="modal-title" class="text-lg font-bold text-slate-800"></h3>
+                <button id="modal-close" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+            </div>
+            <div id="modal-body" class="p-6 space-y-4">
+            </div>
+            <div class="px-6 py-4 border-t border-slate-200 flex justify-end space-x-3">
+                <button id="modal-cancel" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Batal</button>
+                <button id="modal-save" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-medium hover:bg-navy-900 transition-colors">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Config & Script -->
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
