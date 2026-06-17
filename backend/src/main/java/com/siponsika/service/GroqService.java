@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -14,60 +15,67 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
-public class GeminiService {
+public class GroqService {
 
-    private static final Logger log = LoggerFactory.getLogger(GeminiService.class);
+    private static final Logger log = LoggerFactory.getLogger(GroqService.class);
 
-    @Value("${gemini.api.key}")
+    @Value("${GROQ_API_KEY:YOUR_GROQ_API_KEY}")
     private String apiKey;
 
-    @Value("${gemini.api.url}")
-    private String apiUrl;
+    private final String apiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
     private final WebClient webClient;
     private final ObjectMapper mapper;
 
-    public GeminiService() {
+    public GroqService() {
         this.webClient = WebClient.builder().build();
         this.mapper = new ObjectMapper();
     }
 
     public Flux<String> streamChatResponse(String userMessage) {
-        if (apiKey == null || apiKey.equals("YOUR_GEMINI_API_KEY") || apiKey.isEmpty()) {
-            return Flux.just("Peringatan: API Key Gemini belum diatur di backend.");
+        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("YOUR_GROQ_API_KEY")) {
+            return Flux.just("Peringatan: API Key Groq belum diatur di backend.");
         }
-
-        String fullUrl = apiUrl + "?key=" + apiKey + "&alt=sse";
 
         String systemPrompt = "Anda adalah SIPONSIKA AI, asisten Manajemen Darurat dan Logistik. " +
                 "Bantu koordinator lapangan menganalisis data logistik, memantau pengungsi, memprediksi kebutuhan. " +
-                "Gunakan bahasa profesional, informatif, dan ringkas.\n\nPertanyaan: " + userMessage;
+                "Gunakan bahasa profesional, informatif, dan ringkas.";
 
-        Map<String, Object> parts = new HashMap<>();
-        parts.put("text", systemPrompt);
+        List<Map<String, String>> messages = new ArrayList<>();
 
-        Map<String, Object> content = new HashMap<>();
-        content.put("parts", List.of(parts));
+        Map<String, String> systemMsg = new HashMap<>();
+        systemMsg.put("role", "system");
+        systemMsg.put("content", systemPrompt);
+        messages.add(systemMsg);
+
+        Map<String, String> userMsg = new HashMap<>();
+        userMsg.put("role", "user");
+        userMsg.put("content", userMessage);
+        messages.add(userMsg);
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("contents", List.of(content));
+        requestBody.put("model", "llama-3.1-8b-instant");
+        requestBody.put("messages", messages);
+        requestBody.put("stream", true);
 
-        log.info("Mengirim request ke Gemini API: {}", apiUrl);
+        log.info("Mengirim request ke Groq API: {}", apiUrl);
 
         return webClient.post()
-                .uri(fullUrl)
+                .uri(apiUrl)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response -> {
-                    log.error("Gemini API error: status={}", response.statusCode());
+                    log.error("Groq API error: status={}", response.statusCode());
                     return response.bodyToMono(String.class).flatMap(body -> {
-                        log.error("Gemini API error body: {}", body);
+                        log.error("Groq API error body: {}", body);
                         String msg = "Error dari server AI (" + response.statusCode() + ").";
                         return reactor.core.publisher.Mono.error(new RuntimeException(msg));
                     });
@@ -85,10 +93,11 @@ public class GeminiService {
                 .filter(json -> !json.equals("[DONE]"))
                 .map(this::extractText)
                 .filter(text -> !text.isEmpty())
-                .doOnError(e -> log.error("GeminiService error: {}", e.getMessage()))
+                .doOnError(e -> log.error("GroqService error: {}", e.getMessage()))
                 .onErrorResume(e -> {
                     String msg = e.getMessage();
-                    if (msg == null || msg.isBlank()) msg = "Gagal terhubung ke server AI. Periksa koneksi internet dan API key.";
+                    if (msg == null || msg.isBlank())
+                        msg = "Gagal terhubung ke server AI. Periksa koneksi internet dan API key.";
                     return Flux.just(msg);
                 });
     }
@@ -96,13 +105,16 @@ public class GeminiService {
     private String extractText(String json) {
         try {
             JsonNode root = mapper.readTree(json);
-            JsonNode textNode = root.path("candidates")
-                    .get(0).path("content")
-                    .path("parts").get(0)
-                    .path("text");
-            return textNode.asText();
+            JsonNode choices = root.path("choices");
+            if (choices.isArray() && choices.size() > 0) {
+                JsonNode delta = choices.get(0).path("delta");
+                if (delta.has("content")) {
+                    return delta.path("content").asText();
+                }
+            }
+            return "";
         } catch (Exception e) {
-            log.warn("Gagal parse JSON dari Gemini: {}", e.getMessage());
+            log.warn("Gagal parse JSON dari Groq: {}", e.getMessage());
             return "";
         }
     }

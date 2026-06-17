@@ -23,3 +23,7 @@ frontend/.env
 
 # Node
 node_modules/
+
+# Maven (downloaded locally)
+apache-maven-*/
+maven.zip

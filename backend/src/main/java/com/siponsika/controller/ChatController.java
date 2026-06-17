@@ -1,6 +1,6 @@
 package com.siponsika.controller;
 
-import com.siponsika.service.GeminiService;
+import com.siponsika.service.GroqService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +18,7 @@ public class ChatController {
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
     @Autowired
-    private GeminiService geminiService;
+    private GroqService groqService;
 
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamChat(@RequestBody Map<String, String> request) {
@@ -35,7 +35,7 @@ public class ChatController {
             return emitter;
         }
 
-        geminiService.streamChatResponse(message)
+        groqService.streamChatResponse(message)
                 .subscribe(
                         text -> {
                             try {
