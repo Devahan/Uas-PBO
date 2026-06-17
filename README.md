@@ -12,14 +12,14 @@ Aplikasi manajemen darurat untuk penanganan bencana — mengelola posko, pengung
 │   ├── .env.example
 │   └── .env           # (local, jangan commit)
 │
-├── backend/           # Spring Boot 3.2.4 + Java 17
+├── backend/           # Spring Boot 3.2.4 + Java 17+
 │   ├── src/
 │   │   └── main/java/com/siponsika/
 │   │       ├── config/       # CORS, DataInitializer
 │   │       ├── controller/   # REST API
 │   │       ├── model/        # JPA entities
 │   │       ├── repository/   # Spring Data JPA
-│   │       └── service/      # GeminiService
+│   │       └── service/      # GroqService (AI)
 │   ├── .env.example
 │   ├── .env            # (local, jangan commit)
 │   └── pom.xml
@@ -36,40 +36,52 @@ Aplikasi manajemen darurat untuk penanganan bencana — mengelola posko, pengung
 | **Manajemen Posko** | CRUD posko + fasilitas, kapasitas, okupansi |
 | **Manajemen Pengungsi** | CRUD pengungsi + search by nama, assign kamar |
 | **Distribusi Kamar** | CRUD kamar per posko, status penuh/tersedia, filter |
-| **Asisten AI** | Chat real-time streaming dengan Gemini AI |
+| **Asisten AI** | Chat real-time streaming dengan Groq AI (llama-3.1-8b-instant) |
 
 ## Cara Menjalankan
 
+### Prasyarat
+
+- **Java** 17 atau lebih baru
+- **Maven** 3.x (atau gunakan Maven Wrapper / download manual)
+- **Python** 3.x (untuk server frontend)
+- **Groq API Key** — daftar gratis di [console.groq.com](https://console.groq.com)
+
 ### 1. Backend
 
-**macOS / Linux:**
+**Konfigurasi environment:**
+```
+cd backend
+copy .env.example .env   # Windows
+cp .env.example .env     # macOS/Linux
+```
+
+Buka file `backend/.env` dan isi `GROQ_API_KEY` dengan API key Groq kamu:
+```env
+GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+**Jalankan backend:**
+
+macOS / Linux:
 ```bash
 cd backend
-cp .env.example .env
-# Isi GEMINI_API_KEY di .env dengan API key Gemini-mu
-export JAVA_HOME=/opt/homebrew/opt/openjdk@17
 mvn spring-boot:run
 ```
 
-**Windows (CMD):**
+Windows (CMD):
 ```cmd
 cd backend
-copy .env.example .env
-:: Isi GEMINI_API_KEY di .env dengan API key Gemini-mu
-set JAVA_HOME=C:\Program Files\Java\jdk-17
 mvn spring-boot:run
 ```
 
-**Windows (PowerShell):**
+Windows (PowerShell):
 ```powershell
 cd backend
-Copy-Item .env.example .env
-# Isi GEMINI_API_KEY di .env dengan API key Gemini-mu
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
-mvn spring-boot:run
+..\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run
 ```
 
-> Pastikan Java 17 dan Maven sudah terinstall dan terdaftar di PATH.
+> Jika `mvn` belum tersedia di PATH, kamu bisa download Maven dari [maven.apache.org](https://maven.apache.org/download.cgi) dan jalankan via path lengkap seperti contoh PowerShell di atas.
 
 Backend berjalan di `http://localhost:8080`.
 
@@ -115,5 +127,11 @@ Buka `http://localhost:5500` di browser.
 ## Teknologi
 
 - **Frontend:** HTML, Tailwind CSS, FontAwesome
-- **Backend:** Spring Boot 3.2.4, Java 17, JPA, H2, WebFlux
-- **AI:** Google Gemini API (streaming)
+- **Backend:** Spring Boot 3.2.4, Java 17+, JPA, H2, WebFlux
+- **AI:** Groq API — model `llama-3.1-8b-instant` (streaming SSE)
+
+## Catatan
+
+- File `.env` tidak di-commit ke Git (sudah di-*gitignore*). Simpan API Key hanya di file `.env` lokal.
+- Database menggunakan H2 in-memory, data akan hilang setiap kali backend di-restart.
+- Untuk kompatibilitas Java 25+, dependency Lombok telah dihapus dan digantikan dengan getter/setter manual.
