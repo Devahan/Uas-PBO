@@ -6,7 +6,8 @@ Aplikasi manajemen darurat untuk penanganan bencana — mengelola posko, pengung
 
 ```
 ├── frontend/          # HTML + Tailwind CSS + JS (static)
-│   ├── index.html     # UI utama
+│   ├── login.html     # Halaman login admin
+│   ├── index.html     # UI utama (Dashboard)
 │   ├── app.js         # CRUD, chat, navigation
 │   ├── config.js      # Runtime config
 │   ├── .env.example
@@ -32,6 +33,7 @@ Aplikasi manajemen darurat untuk penanganan bencana — mengelola posko, pengung
 
 | Modul | Fitur |
 |-------|-------|
+| **Autentikasi** | Login admin dengan username/email & password, sesi berbasis client |
 | **Dasbor** | KPI real-time: total pengungsi, posko aktif, sisa kapasitas, kamar penuh |
 | **Manajemen Posko** | CRUD posko + fasilitas, kapasitas, okupansi |
 | **Manajemen Pengungsi** | CRUD pengungsi + search by nama, assign kamar |
@@ -107,6 +109,7 @@ Buka `http://localhost:5500` di browser.
 
 | Method | Endpoint | Keterangan |
 |--------|----------|------------|
+| POST | `/api/auth/login` | Login admin/petugas |
 | GET | `/api/posko` | Semua posko |
 | POST | `/api/posko` | Tambah posko |
 | PUT | `/api/posko/{id}` | Edit posko |
