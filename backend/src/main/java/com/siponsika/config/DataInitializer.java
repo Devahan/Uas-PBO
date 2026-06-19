@@ -1,8 +1,10 @@
 package com.siponsika.config;
 
+import com.siponsika.model.Admin;
 import com.siponsika.model.Kamar;
 import com.siponsika.model.Pengungsi;
 import com.siponsika.model.Posko;
+import com.siponsika.repository.AdminRepository;
 import com.siponsika.repository.KamarRepository;
 import com.siponsika.repository.PengungsiRepository;
 import com.siponsika.repository.PoskoRepository;
@@ -15,15 +17,55 @@ public class DataInitializer implements CommandLineRunner {
     private final PoskoRepository poskoRepository;
     private final PengungsiRepository pengungsiRepository;
     private final KamarRepository kamarRepository;
+    private final AdminRepository adminRepository;
 
-    public DataInitializer(PoskoRepository poskoRepository, PengungsiRepository pengungsiRepository, KamarRepository kamarRepository) {
+    public DataInitializer(PoskoRepository poskoRepository,
+                           PengungsiRepository pengungsiRepository,
+                           KamarRepository kamarRepository,
+                           AdminRepository adminRepository) {
         this.poskoRepository = poskoRepository;
         this.pengungsiRepository = pengungsiRepository;
         this.kamarRepository = kamarRepository;
+        this.adminRepository = adminRepository;
     }
 
     @Override
     public void run(String... args) {
+
+        // ── Seed Admin ──────────────────────────────────────────────────────────
+        if (adminRepository.count() == 0) {
+            Admin a1 = new Admin(null,
+                    "admin",
+                    "admin@siponsika.go.id",
+                    "admin123",
+                    "Administrator Utama",
+                    "Super Admin",
+                    "https://ui-avatars.com/api/?name=Admin+Utama&background=0a2540&color=fff");
+
+            Admin a2 = new Admin(null,
+                    "koordinator",
+                    "koordinator@siponsika.go.id",
+                    "posko2024",
+                    "A. Wijaya",
+                    "Koordinator Lapangan",
+                    "https://ui-avatars.com/api/?name=A+Wijaya&background=0D8ABC&color=fff");
+
+            Admin a3 = new Admin(null,
+                    "petugas",
+                    "petugas@siponsika.go.id",
+                    "petugas123",
+                    "Sari Dewi",
+                    "Petugas Posko",
+                    "https://ui-avatars.com/api/?name=Sari+Dewi&background=ff6b35&color=fff");
+
+            adminRepository.saveAll(java.util.List.of(a1, a2, a3));
+            System.out.println("✅ [DataInitializer] 3 akun admin default berhasil dibuat.");
+            System.out.println("   ┌─ admin        / admin123");
+            System.out.println("   ├─ koordinator  / posko2024");
+            System.out.println("   └─ petugas      / petugas123");
+        }
+
+        // ── Seed Posko ──────────────────────────────────────────────────────────
         if (poskoRepository.count() > 0) return;
 
         Posko p1 = new Posko(null, "Posko Merapi 01", "Jl. Merbabu No. 10, Cangkringan", 200, 184, "Tenda, MCK, Dapur Umum");

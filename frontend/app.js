@@ -1,7 +1,39 @@
 const API_BASE_URL = (typeof ENV !== 'undefined' ? ENV.API_BASE_URL : 'http://localhost:8080/api');
 
+// ── Muat info admin dari sesi ─────────────────────────────────────────────
+function loadAdminSession() {
+    try {
+        const raw = sessionStorage.getItem('siponsika_admin');
+        if (!raw) return;
+        const admin = JSON.parse(raw);
+        const namaEl   = document.getElementById('header-nama');
+        const jabatanEl = document.getElementById('header-jabatan');
+        const avatarEl  = document.getElementById('header-avatar');
+        if (namaEl)    namaEl.textContent    = admin.namaLengkap || admin.username;
+        if (jabatanEl) jabatanEl.textContent = admin.jabatan || 'Admin Posko';
+        if (avatarEl && admin.avatarUrl) avatarEl.src = admin.avatarUrl;
+    } catch (e) { /* ignore */ }
+}
+
+// ── Logout ────────────────────────────────────────────────────────────────
+async function doLogout() {
+    if (!confirm('Apakah Anda yakin ingin keluar dari sistem?')) return;
+    try {
+        await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST' });
+    } catch (_) { /* tidak masalah jika gagal */ }
+    sessionStorage.removeItem('siponsika_admin');
+    window.location.replace('login.html');
+}
+
 // --- Navigation ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Muat info admin
+    loadAdminSession();
+
+    // Tombol logout
+    const btnLogout = document.getElementById('btn-logout');
+    if (btnLogout) btnLogout.addEventListener('click', (e) => { e.preventDefault(); doLogout(); });
+
     const sidebarItems = document.querySelectorAll('.sidebar-item');
     const sections = {
         'dashboard': document.getElementById('section-dashboard'),
@@ -46,7 +78,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
     document.getElementById('modal-save').addEventListener('click', saveModal);
+
+    // Muat data dashboard saat pertama kali
+    loadLaporan();
 });
+
 
 // --- Modal ---
 let modalMode = null;
