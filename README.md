@@ -47,6 +47,7 @@ Aplikasi manajemen darurat untuk penanganan bencana — mengelola posko, pengung
 - **Java** 17 atau lebih baru
 - **Maven** 3.x (atau gunakan Maven Wrapper / download manual)
 - **Python** 3.x (untuk server frontend)
+- **MySQL** (XAMPP atau MySQL Server)
 - **Groq API Key** — daftar gratis di [console.groq.com](https://console.groq.com)
 
 ### 1. Backend
@@ -62,6 +63,13 @@ Buka file `backend/.env` dan isi `GROQ_API_KEY` dengan API key Groq kamu:
 ```env
 GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
+
+**Persiapan Database:**
+Buat database MySQL baru dengan nama `siponsikadb` (misalnya menggunakan phpMyAdmin atau terminal):
+```sql
+CREATE DATABASE siponsikadb;
+```
+Tabel-tabel akan otomatis dibuat oleh Spring Boot (JPA) saat aplikasi pertama kali dijalankan.
 
 **Jalankan backend:**
 
@@ -130,11 +138,11 @@ Buka `http://localhost:5500` di browser.
 ## Teknologi
 
 - **Frontend:** HTML, Tailwind CSS, FontAwesome
-- **Backend:** Spring Boot 3.2.4, Java 17+, JPA, H2, WebFlux
+- **Backend:** Spring Boot 3.2.4, Java 17+, JPA, MySQL, WebFlux
 - **AI:** Groq API — model `llama-3.1-8b-instant` (streaming SSE)
 
 ## Catatan
 
 - File `.env` tidak di-commit ke Git (sudah di-*gitignore*). Simpan API Key hanya di file `.env` lokal.
-- Database menggunakan H2 in-memory, data akan hilang setiap kali backend di-restart.
+- Database menggunakan MySQL, sehingga data akan tersimpan permanen. Pastikan MySQL berjalan dan terdapat database `siponsikadb`.
 - Untuk kompatibilitas Java 25+, dependency Lombok telah dihapus dan digantikan dengan getter/setter manual.
