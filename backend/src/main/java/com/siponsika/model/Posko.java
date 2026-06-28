@@ -6,10 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
-public class Posko {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Posko extends BaseEntity {
+
 
     private String namaPosko;
     private String alamat;
@@ -21,7 +19,7 @@ public class Posko {
     }
 
     public Posko(Long id, String namaPosko, String alamat, Integer kapasitas, Integer okupansi, String fasilitas) {
-        this.id = id;
+        this.setId(id);
         this.namaPosko = namaPosko;
         this.alamat = alamat;
         this.kapasitas = kapasitas;
@@ -29,8 +27,6 @@ public class Posko {
         this.fasilitas = fasilitas;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
     public String getNamaPosko() { return namaPosko; }
     public void setNamaPosko(String namaPosko) { this.namaPosko = namaPosko; }
     public String getAlamat() { return alamat; }

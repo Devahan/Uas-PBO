@@ -6,10 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
-public class Pengungsi {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Pengungsi extends BaseEntity {
+
 
     private String nama;
     private Integer umur;
@@ -22,7 +20,7 @@ public class Pengungsi {
     }
 
     public Pengungsi(Long id, String nama, Integer umur, String jenisKelamin, Integer anggotaKeluarga, String kondisiKesehatan, Long kamarId) {
-        this.id = id;
+        this.setId(id);
         this.nama = nama;
         this.umur = umur;
         this.jenisKelamin = jenisKelamin;
@@ -31,8 +29,6 @@ public class Pengungsi {
         this.kamarId = kamarId;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
     public String getNama() { return nama; }
     public void setNama(String nama) { this.nama = nama; }
     public Integer getUmur() { return umur; }

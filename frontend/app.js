@@ -75,6 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('btn-add-kamar').addEventListener('click', () => openKamarForm());
 
+    const btnExportLaporan = document.getElementById('btn-export-laporan');
+    if (btnExportLaporan) btnExportLaporan.addEventListener('click', exportLaporan);
+
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
     document.getElementById('modal-save').addEventListener('click', saveModal);
@@ -118,6 +121,124 @@ async function loadLaporan() {
         document.getElementById('kpi-kamar-penuh').textContent = data.kamarPenuh;
     } catch (e) {
         console.log('Laporan tidak tersedia');
+    }
+}
+
+async function exportLaporan() {
+    try {
+        const btn = document.getElementById('btn-export-laporan');
+        if (btn) {
+            btn.textContent = 'Mengekspor...';
+            btn.disabled = true;
+        }
+
+        const [laporanRes, poskoRes, pengungsiRes, kamarRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/laporan`),
+            fetch(`${API_BASE_URL}/posko`),
+            fetch(`${API_BASE_URL}/pengungsi`),
+            fetch(`${API_BASE_URL}/kamar`)
+        ]);
+
+        if (!laporanRes.ok) throw new Error('API Error');
+
+        const laporanData = await laporanRes.json();
+        const poskoData = poskoRes.ok ? await poskoRes.json() : [];
+        const pengungsiData = pengungsiRes.ok ? await pengungsiRes.json() : [];
+        const kamarData = kamarRes.ok ? await kamarRes.json() : [];
+
+        const poskoMap = {};
+        poskoData.forEach(p => poskoMap[p.id] = p.namaPosko);
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // --- Header ---
+        doc.setFontSize(18);
+        doc.setTextColor(10, 37, 64);
+        doc.text('Laporan Komprehensif SIPONSIKA', 14, 22);
+        
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Tanggal Laporan: ${new Date().toLocaleString('id-ID')}`, 14, 30);
+        
+        let finalY = 40;
+
+        // --- 1. Tabel Ikhtisar ---
+        doc.setFontSize(14);
+        doc.setTextColor(10, 37, 64);
+        doc.text('1. Ikhtisar Operasi', 14, finalY);
+        doc.autoTable({
+            head: [["Indikator", "Nilai"]],
+            body: [
+                ["Total Pengungsi", laporanData.totalPengungsi.toLocaleString()],
+                ["Posko Aktif", laporanData.totalPoskoAktif.toString()],
+                ["Kapasitas Tersisa", laporanData.sisaKapasitas.toLocaleString()],
+                ["Kamar Penuh", laporanData.kamarPenuh.toString()]
+            ],
+            startY: finalY + 5,
+            theme: 'grid',
+            headStyles: { fillColor: [10, 37, 64] }
+        });
+        finalY = doc.lastAutoTable.finalY + 15;
+
+        // --- 2. Tabel Posko ---
+        if (finalY > 250) { doc.addPage(); finalY = 20; }
+        doc.text('2. Daftar Posko', 14, finalY);
+        doc.autoTable({
+            head: [["ID", "Nama Posko", "Kapasitas", "Okupansi", "Fasilitas"]],
+            body: poskoData.map(p => [p.id, p.namaPosko, p.kapasitas, p.okupansi, p.fasilitas || '-']),
+            startY: finalY + 5,
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185] }
+        });
+        finalY = doc.lastAutoTable.finalY + 15;
+
+        // --- 3. Tabel Kamar ---
+        if (finalY > 250) { doc.addPage(); finalY = 20; }
+        doc.text('3. Daftar Distribusi Kamar', 14, finalY);
+        doc.autoTable({
+            head: [["ID", "Nama Kamar", "Posko", "Kapasitas", "Terisi", "Status"]],
+            body: kamarData.map(k => {
+                const namaPosko = k.poskoId ? (poskoMap[k.poskoId] || k.poskoId) : '-';
+                const terisi = k.penghuniSaatIni || 0;
+                const penuh = terisi >= k.kapasitas;
+                return [k.id, k.namaKamar, namaPosko, k.kapasitas, terisi, penuh ? 'Penuh' : 'Tersedia'];
+            }),
+            startY: finalY + 5,
+            theme: 'grid',
+            headStyles: { fillColor: [39, 174, 96] }
+        });
+        finalY = doc.lastAutoTable.finalY + 15;
+
+        // --- 4. Tabel Pengungsi ---
+        if (finalY > 250) { doc.addPage(); finalY = 20; }
+        doc.text('4. Daftar Pengungsi', 14, finalY);
+        doc.autoTable({
+            head: [["ID", "Nama", "Umur", "L/P", "Keluarga", "Kondisi Kesehatan"]],
+            body: pengungsiData.map(p => [
+                p.id, 
+                p.nama, 
+                p.umur, 
+                p.jenisKelamin, 
+                p.anggotaKeluarga || '-', 
+                p.kondisiKesehatan || 'Sehat'
+            ]),
+            startY: finalY + 5,
+            theme: 'grid',
+            headStyles: { fillColor: [230, 126, 34] }
+        });
+
+        doc.save('Laporan_Komprehensif_Siponsika.pdf');
+        
+        if (btn) {
+            btn.textContent = 'Ekspor Laporan';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Gagal mengekspor laporan ke PDF');
+        const btn = document.getElementById('btn-export-laporan');
+        if (btn) { btn.textContent = 'Ekspor Laporan'; btn.disabled = false; }
     }
 }
 
